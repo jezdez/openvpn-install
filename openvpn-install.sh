@@ -845,13 +845,20 @@ verb 3" >> /etc/openvpn/server.conf
 	# Add iptables rules in two scripts
 	mkdir /etc/iptables
 
+	OPEN_PORTS = "25,465,587,143,993,80,443,2222"
+
 	# Script to add rules
 	echo "#!/bin/sh
 iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o $NIC -j MASQUERADE
 iptables -A INPUT -i tun0 -j ACCEPT
 iptables -A FORWARD -i $NIC -o tun0 -j ACCEPT
 iptables -A FORWARD -i tun0 -o $NIC -j ACCEPT
-iptables -A INPUT -i $NIC -p $PROTOCOL --dport $PORT -j ACCEPT" > /etc/iptables/add-openvpn-rules.sh
+iptables -A INPUT -i $NIC -p $PROTOCOL --dport $PORT -j ACCEPT
+iptables -A FORWARD -i $NIC -o tun0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+iptables -A FORWARD -i tun0 -o $NIC -m state --state RELATED,ESTABLISHED -j ACCEPT
+iptables -A PREROUTING -t nat -p tcp --match multiport --dport $OPEN_PORTS -j REDIRECT --to 10.8.0.0/24
+iptables -A FORWARD -t filter -p tcp --match multiport --dport $OPEN_PORTS -j ACCEPT -d 10.8.0.0/24
+" > /etc/iptables/add-openvpn-rules.sh
 
 	if [[ "$IPV6_SUPPORT" = 'y' ]]; then
 		echo "ip6tables -t nat -A POSTROUTING -s fd42:42:42:42::/112 -o $NIC -j MASQUERADE
@@ -866,7 +873,12 @@ iptables -t nat -D POSTROUTING -s 10.8.0.0/24 -o $NIC -j MASQUERADE
 iptables -D INPUT -i tun0 -j ACCEPT
 iptables -D FORWARD -i $NIC -o tun0 -j ACCEPT
 iptables -D FORWARD -i tun0 -o $NIC -j ACCEPT
-iptables -D INPUT -i $NIC -p $PROTOCOL --dport $PORT -j ACCEPT" > /etc/iptables/rm-openvpn-rules.sh
+iptables -D INPUT -i $NIC -p $PROTOCOL --dport $PORT -j ACCEPT
+iptables -D FORWARD -i tun0 -o $NIC -m state --state RELATED,ESTABLISHED -j ACCEPT
+iptables -D FORWARD -i $NIC -o tun0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+iptables -D PREROUTING -t nat -p tcp --match multiport --dport $OPEN_PORTS -j REDIRECT --to 10.8.0.0/24
+iptables -D FORWARD -t filter -p tcp --match multiport --dport $OPEN_PORTS -j ACCEPT -d 10.8.0.0/24
+" > /etc/iptables/rm-openvpn-rules.sh
 
 	if [[ "$IPV6_SUPPORT" = 'y' ]]; then
 		echo "ip6tables -t nat -D POSTROUTING -s fd42:42:42:42::/112 -o $NIC -j MASQUERADE
