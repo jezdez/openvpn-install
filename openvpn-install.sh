@@ -845,7 +845,7 @@ verb 3" >> /etc/openvpn/server.conf
 	# Add iptables rules in two scripts
 	mkdir /etc/iptables
 
-	OPEN_PORTS = "25,465,587,143,993,80,443,2222"
+	OPEN_PORTS="25,465,587,143,993,80,443,2222"
 
 	# Script to add rules
 	echo "#!/bin/sh
