@@ -856,8 +856,8 @@ iptables -A FORWARD -i tun0 -o $NIC -j ACCEPT
 iptables -A INPUT -i $NIC -p $PROTOCOL --dport $PORT -j ACCEPT
 iptables -A FORWARD -i $NIC -o tun0 -m state --state RELATED,ESTABLISHED -j ACCEPT
 iptables -A FORWARD -i tun0 -o $NIC -m state --state RELATED,ESTABLISHED -j ACCEPT
-iptables -A PREROUTING -t nat -p tcp --match multiport --dport $OPEN_PORTS -j REDIRECT --to 10.8.0.0/24
-iptables -A FORWARD -t filter -p tcp --match multiport --dport $OPEN_PORTS -j ACCEPT -d 10.8.0.0/24
+iptables -A PREROUTING -t nat -p tcp --match multiport --dport $OPEN_PORTS -j DNAT --to 10.8.0.2
+iptables -A FORWARD -t filter -p tcp --match multiport --dport $OPEN_PORTS -j ACCEPT -d 10.8.0.2
 " > /etc/iptables/add-openvpn-rules.sh
 
 	if [[ "$IPV6_SUPPORT" = 'y' ]]; then
@@ -876,8 +876,8 @@ iptables -D FORWARD -i tun0 -o $NIC -j ACCEPT
 iptables -D INPUT -i $NIC -p $PROTOCOL --dport $PORT -j ACCEPT
 iptables -D FORWARD -i tun0 -o $NIC -m state --state RELATED,ESTABLISHED -j ACCEPT
 iptables -D FORWARD -i $NIC -o tun0 -m state --state RELATED,ESTABLISHED -j ACCEPT
-iptables -D PREROUTING -t nat -p tcp --match multiport --dport $OPEN_PORTS -j REDIRECT --to 10.8.0.0/24
-iptables -D FORWARD -t filter -p tcp --match multiport --dport $OPEN_PORTS -j ACCEPT -d 10.8.0.0/24
+iptables -D PREROUTING -t nat -p tcp --match multiport --dport $OPEN_PORTS -j DNAT --to 10.8.0.2
+iptables -D FORWARD -t filter -p tcp --match multiport --dport $OPEN_PORTS -j ACCEPT -d 10.8.0.2
 " > /etc/iptables/rm-openvpn-rules.sh
 
 	if [[ "$IPV6_SUPPORT" = 'y' ]]; then
